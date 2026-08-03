@@ -34,7 +34,9 @@
             "theme-autumn",
             "toc",
             "toolset",
-            "dn_imprintprivacy"
+            "dn_imprintprivacy",
+            "dn_coordinate_input",
+            "console"
         ],
         "i18n": [
             "bundle"

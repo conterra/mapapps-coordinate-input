@@ -1,13 +1,5 @@
-# mapapps-devnet-blueprint
+# mapapps-coordinate-input
 
-**This project is not intended for use by non-con terra users.** It is designed for the creation of bundles and their releases in GitHub and can access con terra internal infrastructures for this purpose. To develop your own map.apps bundles, use the [mapapps-4-developers project](https://github.com/conterra/mapapps-4-developers).
-
-This project is a starting point for programming custom map.apps bundles and themes.
-You may use this project as a blueprint for starting your own map.apps project.
-
-Bundles can be implemented in both TypeScript and JavaScript. As an example, this project contains the `sample_helloworld` bundle (implemented in TypeScript), which demonstrates how to provide a simple UI component and a tool.
-
-For detailed documentation on how to use map.apps for Developers to extend map.apps, see the [map.apps Developer's Guide](https://docs.conterra.de/en/mapapps/latest/developersguide/getting-started/).
 
 ## Software Requirements
 

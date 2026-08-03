@@ -1,0 +1,21 @@
+{
+    "name": "dn_coordinate_input",
+    "version": "1.0.0-SNAPSHOT",
+    "title": "${bundleName}",
+    "description": "${bundleDescription}",
+    "productName": "devnet-mapapps-coordinate-input",
+    "vendor": "con terra GmbH",
+    "main": "",
+    "keywords": [
+        "sample"
+    ],
+    "i18n": [
+        "bundle"
+    ],
+    "dependencies": {
+        "ct": "^4.16.0"
+    },
+    "components": [
+
+    ]
+}

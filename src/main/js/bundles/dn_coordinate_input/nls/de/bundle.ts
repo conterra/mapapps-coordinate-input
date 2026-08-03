@@ -14,17 +14,9 @@
 /// limitations under the License.
 ///
 
-const i18n = {
-    root: {
-        bundleName: "Hello World",
-        bundleDescription: "This bundle prints Hello.",
-        hello: "Hello World"
-    },
-    de: true
-};
+import { Messages } from "../bundle";
 
-export type Messages = (typeof i18n)["root"];
-export interface MessagesReference {
-    get: () => Messages
-}
-export default i18n;
+export default {
+    bundleName: "Hallo Welt",
+    bundleDescription: "Dieses Bundle erlaubt den Import einer Liste von Koordinaten in ein Layer."
+} satisfies Messages;

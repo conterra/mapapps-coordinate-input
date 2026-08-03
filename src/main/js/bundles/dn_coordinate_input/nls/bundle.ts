@@ -14,10 +14,16 @@
 /// limitations under the License.
 ///
 
-import { Messages } from "../bundle";
+const i18n = {
+    root: {
+        bundleName: "Coordinate Input",
+        bundleDescription: "This bundle allows importing of lists of coordinates into a layer"
+    },
+    de: true
+};
 
-export default {
-    bundleName: "Hallo Welt",
-    bundleDescription: "Das Modul gibt Hallo aus.",
-    hello: "Hallo Welt"
-} satisfies Messages;
+export type Messages = (typeof i18n)["root"];
+export interface MessagesReference {
+    get: () => Messages
+}
+export default i18n;
