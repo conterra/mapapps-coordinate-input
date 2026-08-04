@@ -34,3 +34,11 @@ Configure the reference systems offered in the selection through `Config`. Every
 
 Entries without a `title` show their `id`, except for `auto`, which is labelled from the bundle i18n
 (`ui.referenceSystem.auto`) so that it stays translated.
+
+### Automatic detection
+
+The `auto` entry guesses the reference system from the value ranges of the entered coordinates. It only ever
+picks a system that is configured, and it recognizes `4326`, `25832`, `25833` and `3857`. Anything else has to
+be selected explicitly, as does a choice between systems that share a value range: the two UTM zones cannot be
+told apart from the numbers alone, and the one configured first wins. Coordinates that fit no known range are
+not drawn.

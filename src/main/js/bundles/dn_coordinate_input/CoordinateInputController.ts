@@ -26,7 +26,8 @@ import type { MapWidgetModel } from "map-widget/api";
 import {
     AUTO_REFERENCE_SYSTEM,
     type CoordinateInputMode,
-    type CoordinateInputModel
+    type CoordinateInputModel,
+    type ReferenceSystem
 } from "./CoordinateInputModel";
 
 /**
@@ -65,6 +66,30 @@ const SEPARATORS = /[\s,;]+/;
 
 /** A coordinate read from one input line, ordered as x/y. */
 type Coordinate = [number, number];
+
+/** Value ranges a coordinate has to fall into to count as one of `id`. */
+interface DetectionRule {
+    id: string;
+    x: [number, number];
+    y: [number, number];
+}
+
+/**
+ * Ranges by which the `auto` entry recognizes a reference system, most
+ * distinctive first. Only the systems listed here take part in the detection.
+ */
+const DETECTION_RULES: DetectionRule[] = [
+    // Degrees are unmistakable: they are far below the values of every projected
+    // system in this list.
+    { id: "4326", x: [-180, 180], y: [-90, 90] },
+    // The usable range of a UTM zone, plus the northings ETRS89 covers. Web
+    // Mercator values of the same place can fall into this range as well, but
+    // hand-written meters are far more often UTM, so the zones go first.
+    { id: "25832", x: [100_000, 900_000], y: [3_500_000, 9_400_000] },
+    { id: "25833", x: [100_000, 900_000], y: [3_500_000, 9_400_000] },
+    // Web Mercator takes everything else inside its world extent.
+    { id: "3857", x: [-20_037_508, 20_037_508], y: [-20_048_967, 20_048_967] }
+];
 
 /**
  * Turns the entered coordinates into graphics on an own layer, and keeps that
@@ -106,12 +131,13 @@ export default class CoordinateInputController {
      * content with whatever can be read from the current input.
      */
     private onInputChanged(): void {
-        const { coordinates, mode, referenceSystem } = this.coordinateInputModel!;
+        const { coordinates, mode, referenceSystem, referenceSystems } = this.coordinateInputModel!;
 
-        // TODO: detect the reference system of the input when "auto" is selected.
-        const graphics = referenceSystem === AUTO_REFERENCE_SYSTEM
-            ? []
-            : createGraphics(mode, parseCoordinates(coordinates), referenceSystem);
+        const parsedCoordinates = parseCoordinates(coordinates);
+        const spatialReference = resolveSpatialReference(referenceSystem, parsedCoordinates, referenceSystems);
+        const graphics = spatialReference
+            ? createGraphics(mode, parsedCoordinates, spatialReference)
+            : [];
 
         const layer = this.layer!;
         layer.graphics.removeAll();
@@ -155,17 +181,55 @@ function parseCoordinate(line: string): Coordinate | undefined {
 }
 
 /**
+ * Resolves the selected reference system into the spatial reference the entered
+ * coordinates are read in, detecting it from their values if `auto` is selected.
+ * Nothing is returned if no reference system could be settled on.
+ */
+function resolveSpatialReference(referenceSystem: string, coordinates: Coordinate[],
+    referenceSystems: ReferenceSystem[]): SpatialReference | undefined {
+    const id = referenceSystem === AUTO_REFERENCE_SYSTEM
+        ? detectReferenceSystem(coordinates, referenceSystems)
+        : referenceSystem;
+
+    const wkid = Number(id);
+    if (!id || !Number.isFinite(wkid)) {
+        return undefined;
+    }
+
+    return new SpatialReference({ wkid });
+}
+
+/**
+ * Guesses which of the configured reference systems the coordinates are given
+ * in, for the `auto` entry of the selection.
+ *
+ * The rules are tried in order, and the first one wins whose reference system is
+ * configured and whose ranges hold every single coordinate. Nothing is returned
+ * if no rule fits, so unrecognized input draws nothing instead of drawing
+ * somewhere far off.
+ *
+ * The heuristic can only separate reference systems by their value ranges, so it
+ * cannot tell apart systems that share one - the two UTM zones look the same to
+ * it, and the one listed first in the rules is picked.
+ */
+function detectReferenceSystem(coordinates: Coordinate[], referenceSystems: ReferenceSystem[]): string | undefined {
+    if (coordinates.length === 0) {
+        return undefined;
+    }
+
+    const configured = new Set(referenceSystems.map(({ id }) => id));
+    const rule = DETECTION_RULES.find(({ id, x, y }) => configured.has(id)
+        && coordinates.every(([cx, cy]) => cx >= x[0] && cx <= x[1] && cy >= y[0] && cy <= y[1]));
+
+    return rule?.id;
+}
+
+/**
  * Builds the graphics for the selected mode. Nothing is returned as long as the
  * input does not hold enough coordinates for the geometry.
  */
 function createGraphics(mode: CoordinateInputMode, coordinates: Coordinate[],
-    referenceSystem: string): Graphic[] {
-    const wkid = Number(referenceSystem);
-    if (!Number.isFinite(wkid)) {
-        return [];
-    }
-    const spatialReference = new SpatialReference({ wkid });
-
+    spatialReference: SpatialReference): Graphic[] {
     switch (mode) {
         case "points":
             return createPointGraphics(coordinates, spatialReference);
