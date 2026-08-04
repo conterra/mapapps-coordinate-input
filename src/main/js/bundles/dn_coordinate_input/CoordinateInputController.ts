@@ -17,10 +17,17 @@
 import Graphic from "@arcgis/core/Graphic";
 import GraphicsLayer from "@arcgis/core/layers/GraphicsLayer";
 import Point from "@arcgis/core/geometry/Point";
+import Polygon from "@arcgis/core/geometry/Polygon";
+import Polyline from "@arcgis/core/geometry/Polyline";
+import SpatialReference from "@arcgis/core/geometry/SpatialReference";
 import { createObservers, type Observers } from "apprt-core/Observers";
 import type { InjectedReference } from "apprt-core/InjectedReference";
 import type { MapWidgetModel } from "map-widget/api";
-import { AUTO_REFERENCE_SYSTEM, type CoordinateInputModel } from "./CoordinateInputModel";
+import {
+    AUTO_REFERENCE_SYSTEM,
+    type CoordinateInputMode,
+    type CoordinateInputModel
+} from "./CoordinateInputModel";
 
 /**
  * Model properties fed by the widget's input controls. `referenceSystems` is
@@ -37,6 +44,20 @@ const POINT_SYMBOL = {
     size: 8,
     color: [0, 92, 230, 0.75],
     outline: { color: [255, 255, 255], width: 1.25 }
+};
+
+/** Symbol of the line through the entered coordinates. */
+const LINE_SYMBOL = {
+    type: "simple-line",
+    color: [0, 92, 230, 0.9],
+    width: 2
+};
+
+/** Symbol of the polygon spanned by the entered coordinates. */
+const POLYGON_SYMBOL = {
+    type: "simple-fill",
+    color: [0, 92, 230, 0.25],
+    outline: { color: [0, 92, 230, 0.9], width: 2 }
 };
 
 /** Splits a line into its parts, accepting `7.1, 50.7` as well as `7.1 50.7`. */
@@ -87,13 +108,10 @@ export default class CoordinateInputController {
     private onInputChanged(): void {
         const { coordinates, mode, referenceSystem } = this.coordinateInputModel!;
 
-        // TODO: support the line and polygon modes, and detect the reference
-        // system of the input when "auto" is selected.
-        const supported = mode === "points" && referenceSystem !== AUTO_REFERENCE_SYSTEM;
-        const parsedCoordinates = parseCoordinates(coordinates);
-        const graphics = supported
-            ? createPointGraphics(parsedCoordinates, referenceSystem)
-            : [];
+        // TODO: detect the reference system of the input when "auto" is selected.
+        const graphics = referenceSystem === AUTO_REFERENCE_SYSTEM
+            ? []
+            : createGraphics(mode, parseCoordinates(coordinates), referenceSystem);
 
         const layer = this.layer!;
         layer.graphics.removeAll();
@@ -136,15 +154,68 @@ function parseCoordinate(line: string): Coordinate | undefined {
     return [x, y];
 }
 
-/** Turns each coordinate into a point graphic. */
-function createPointGraphics(coordinates: Coordinate[], referenceSystem: string): Graphic[] {
+/**
+ * Builds the graphics for the selected mode. Nothing is returned as long as the
+ * input does not hold enough coordinates for the geometry.
+ */
+function createGraphics(mode: CoordinateInputMode, coordinates: Coordinate[],
+    referenceSystem: string): Graphic[] {
     const wkid = Number(referenceSystem);
     if (!Number.isFinite(wkid)) {
         return [];
     }
+    const spatialReference = new SpatialReference({ wkid });
 
+    switch (mode) {
+        case "points":
+            return createPointGraphics(coordinates, spatialReference);
+        case "line":
+            return createLineGraphics(coordinates, spatialReference);
+        case "polygon":
+            return createPolygonGraphics(coordinates, spatialReference);
+    }
+}
+
+/** Turns each coordinate into a point graphic. */
+function createPointGraphics(coordinates: Coordinate[], spatialReference: SpatialReference): Graphic[] {
     return coordinates.map(([x, y]) => new Graphic({
-        geometry: new Point({ x, y, spatialReference: { wkid } }),
+        geometry: new Point({ x, y, spatialReference }),
         symbol: POINT_SYMBOL as any
     }));
+}
+
+/** Connects the coordinates into a single line, which needs at least two of them. */
+function createLineGraphics(coordinates: Coordinate[], spatialReference: SpatialReference): Graphic[] {
+    if (coordinates.length < 2) {
+        return [];
+    }
+
+    const geometry = new Polyline({ paths: [coordinates], spatialReference });
+    return [new Graphic({ geometry, symbol: LINE_SYMBOL as any })];
+}
+
+/** Spans a single ring over the coordinates, which needs at least three of them. */
+function createPolygonGraphics(coordinates: Coordinate[], spatialReference: SpatialReference): Graphic[] {
+    if (coordinates.length < 3) {
+        return [];
+    }
+
+    const ring = closeRing(coordinates);
+    const geometry = new Polygon({ rings: [ring], spatialReference });
+    // A counter-clockwise ring counts as a hole and would stay unfilled.
+    if (!geometry.isClockwise(ring)) {
+        geometry.rings = [[...ring].reverse()];
+    }
+
+    return [new Graphic({ geometry, symbol: POLYGON_SYMBOL as any })];
+}
+
+/** Repeats the first coordinate at the end, as a polygon ring has to be closed. */
+function closeRing(coordinates: Coordinate[]): Coordinate[] {
+    const first = coordinates[0];
+    const last = coordinates[coordinates.length - 1];
+    if (first[0] === last[0] && first[1] === last[1]) {
+        return coordinates;
+    }
+    return [...coordinates, first];
 }
