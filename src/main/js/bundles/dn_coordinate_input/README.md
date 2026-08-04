@@ -12,8 +12,8 @@ extent** moves the map onto it, and **Add** hands it over to a second layer, whe
 input is cleared for the next geometry.
 
 That second layer appears in the table of contents as soon as it holds something, so it can be switched off like
-any other layer, and disappears from it again once **Clear** has emptied it. It is not stored anywhere, so it is
-gone on reload.
+any other layer. The widget shows its content as a count, next to a **Clear** button. It is not stored anywhere,
+so it is gone on reload.
 
 ## Configuration
 

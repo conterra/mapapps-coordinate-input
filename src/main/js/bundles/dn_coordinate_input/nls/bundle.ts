@@ -40,6 +40,7 @@ const i18n = {
             },
             zoomToExtent: "Zoom to extent",
             addGeometry: "Add",
+            addedGeometries: "Added geometries",
             clearGeometries: "Clear"
         }
     },

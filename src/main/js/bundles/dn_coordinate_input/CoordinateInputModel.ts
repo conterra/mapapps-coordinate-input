@@ -76,10 +76,10 @@ export const CoordinateInputModel = declare({
     },
 
     /**
-     * Whether any geometry has been added so far. Written by the controller.
+     * How many geometries have been added so far. Written by the controller.
      */
-    hasAddedGeometries: {
-        value: false,
+    addedGeometryCount: {
+        value: 0,
         required: true as const
     },
 

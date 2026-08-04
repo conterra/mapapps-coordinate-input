@@ -216,10 +216,10 @@ export default class CoordinateInputController {
      */
     private onAddedGeometriesChanged(): void {
         const layer = this.persistentLayer!;
-        const hasAddedGeometries = layer.graphics.length > 0;
+        const count = layer.graphics.length;
 
-        layer.listMode = hasAddedGeometries ? "show" : "hide";
-        this.coordinateInputModel!.hasAddedGeometries = hasAddedGeometries;
+        layer.listMode = count > 0 ? "show" : "hide";
+        this.coordinateInputModel!.addedGeometryCount = count;
     }
 
     /**

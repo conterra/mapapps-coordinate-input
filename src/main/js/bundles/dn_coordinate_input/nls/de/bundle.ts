@@ -41,6 +41,7 @@ export default {
         },
         zoomToExtent: "Auf Ausdehnung zoomen",
         addGeometry: "Hinzufügen",
+        addedGeometries: "Hinzugefügte Geometrien",
         clearGeometries: "Leeren"
     }
 } satisfies Messages;

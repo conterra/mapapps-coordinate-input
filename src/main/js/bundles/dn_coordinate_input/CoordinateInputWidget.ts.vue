@@ -58,29 +58,17 @@
             />
         </div>
 
-        <div class="dn-coordinate-input__actions">
+        <div class="dn-coordinate-input__input-actions">
             <v-btn
-                :disabled="!hasAddedGeometries"
-                class="dn-coordinate-input__clear"
-                color="primary"
-                outline
-                @click="$emit('clear-geometries')"
-            >
-                <v-icon left>
-                    icon-trashcan
-                </v-icon>
-                {{ i18n.ui.clearGeometries }}
-            </v-btn>
-            <v-btn
+                :aria-label="i18n.ui.zoomToExtent"
                 :disabled="!hasGeometry"
+                :title="i18n.ui.zoomToExtent"
                 color="primary"
+                icon
                 outline
                 @click="$emit('zoom-to-extent')"
             >
-                <v-icon left>
-                    icon-zoom-in-extent
-                </v-icon>
-                {{ i18n.ui.zoomToExtent }}
+                <v-icon>icon-zoom-in-extent</v-icon>
             </v-btn>
             <v-btn
                 :disabled="!hasGeometry"
@@ -93,6 +81,27 @@
                 {{ i18n.ui.addGeometry }}
             </v-btn>
         </div>
+
+        <template v-if="addedGeometryCount > 0">
+            <v-divider />
+
+            <div class="dn-coordinate-input__added">
+                <span class="dn-coordinate-input__added-count">
+                    {{ i18n.ui.addedGeometries }}: {{ addedGeometryCount }}
+                </span>
+                <v-btn
+                    color="primary"
+                    outline
+                    small
+                    @click="$emit('clear-geometries')"
+                >
+                    <v-icon left>
+                        icon-trashcan
+                    </v-icon>
+                    {{ i18n.ui.clearGeometries }}
+                </v-btn>
+            </div>
+        </template>
     </div>
 </template>
 
@@ -130,7 +139,7 @@
                 referenceSystem: AUTO_REFERENCE_SYSTEM,
                 referenceSystems: [] as ReferenceSystem[],
                 hasGeometry: false,
-                hasAddedGeometries: false
+                addedGeometryCount: 0
             };
         },
         computed: {

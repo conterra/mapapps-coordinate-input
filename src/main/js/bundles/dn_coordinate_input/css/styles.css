@@ -32,28 +32,38 @@
 
 .dn-coordinate-input__modes,
 .dn-coordinate-input__reference-system,
-.dn-coordinate-input__actions {
+.dn-coordinate-input__input-actions,
+.dn-coordinate-input__added,
+.dn-coordinate-input > .v-divider {
     flex: 0 0 auto;
 }
 
-/* Park the actions at the trailing edge, and drop the buttons' own margins so
-   they line up with the inputs above them. Wrapping keeps them readable in a
-   narrow window, where the two labels do not fit on one line. */
-.dn-coordinate-input__actions {
+/* The actions on the current input follow it at the trailing edge. */
+.dn-coordinate-input__input-actions {
     display: flex;
-    flex-wrap: wrap;
     gap: 8px;
     justify-content: flex-end;
 }
 
-.dn-coordinate-input__actions .v-btn {
-    margin: 0;
+/* The added geometries get a row of their own, so that the button sitting next
+   to their count clearly belongs to them and not to the input above. */
+.dn-coordinate-input__added {
+    align-items: center;
+    display: flex;
+    gap: 8px;
+    justify-content: space-between;
 }
 
-/* Clearing acts on the added geometries rather than on the current input, so it
-   is set apart from the other two by being pushed to the leading edge. */
-.dn-coordinate-input__actions .dn-coordinate-input__clear {
-    margin-right: auto;
+/* Their count reads as a label for the row, not as another control. */
+.dn-coordinate-input__added-count {
+    font-size: 13px;
+    opacity: 0.7;
+}
+
+/* Vuetify's own button margins would break the alignment with the inputs. */
+.dn-coordinate-input__input-actions .v-btn,
+.dn-coordinate-input__added .v-btn {
+    margin: 0;
 }
 
 .dn-coordinate-input__coordinates {
