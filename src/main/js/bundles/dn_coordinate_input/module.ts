@@ -15,4 +15,5 @@
 ///
 
 export { CoordinateInputModel as Config } from "./CoordinateInputModel";
+export { default as CoordinateInputController } from "./CoordinateInputController";
 export { default as CoordinateInputWidgetFactory } from "./CoordinateInputWidgetFactory";

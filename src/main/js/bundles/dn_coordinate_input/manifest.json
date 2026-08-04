@@ -54,6 +54,16 @@
             "propertiesConstructor": true
         },
         {
+            "name": "CoordinateInputController",
+            "immediate": true,
+            "references": [
+                {
+                    "name": "coordinateInputModel",
+                    "providing": "dn_coordinate_input.CoordinateInputModel"
+                }
+            ]
+        },
+        {
             "name": "CoordinateInputWidgetFactory",
             "provides": [
                 "dijit.Widget"
