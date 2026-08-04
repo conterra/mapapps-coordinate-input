@@ -14,11 +14,13 @@
         "bundle"
     ],
     "dependencies": {
+        "@arcgis/core": "~4.33.14",
         "ct": "^4.16.0",
         "apprt-binding": "^4.16.0",
         "apprt-core": "^4.20.0",
         "apprt-vue": "^4.20.0",
-        "apprt-vuetify": "^4.20.0"
+        "apprt-vuetify": "^4.20.0",
+        "map-widget": "^4.20.0"
     },
     "cssThemesExtension": [
         {
@@ -60,6 +62,10 @@
                 {
                     "name": "coordinateInputModel",
                     "providing": "dn_coordinate_input.CoordinateInputModel"
+                },
+                {
+                    "name": "mapWidgetModel",
+                    "providing": "map-widget.MapWidgetModel"
                 }
             ]
         },
