@@ -23,6 +23,7 @@ import SpatialReference from "@arcgis/core/geometry/SpatialReference";
 import { loggerForName } from "apprt-core/Logger";
 import { createObservers, type Observers } from "apprt-core/Observers";
 import type { InjectedReference } from "apprt-core/InjectedReference";
+import type { I18N } from "apprt/api";
 import type { MapWidgetModel } from "map-widget/api";
 import {
     AUTO_REFERENCE_SYSTEM,
@@ -30,6 +31,7 @@ import {
     type CoordinateInputModel,
     type ReferenceSystem
 } from "./CoordinateInputModel";
+import type { Messages } from "./nls/bundle";
 
 /**
  * Model properties fed by the widget's input controls. `referenceSystems` is
@@ -37,32 +39,39 @@ import {
  */
 const INPUT_PROPERTIES = ["coordinates", "mode", "referenceSystem"] as const;
 
-const LAYER_ID = "dn_coordinate_input";
+const SKETCH_LAYER_ID = "dn_coordinate_input_sketch";
+const PERSISTENT_LAYER_ID = "dn_coordinate_input_geometries";
 
 const LOG = loggerForName("dn_coordinate_input/CoordinateInputController");
 
-/** Symbol of the entered points. */
-const POINT_SYMBOL = {
-    type: "simple-marker",
-    style: "circle",
-    size: 8,
-    color: [0, 92, 230, 0.75],
-    outline: { color: [255, 255, 255], width: 1.25 }
-};
+/** A symbol for each mode's geometry, drawn in the given rgb colour. */
+function createSymbols(color: [number, number, number]): Record<CoordinateInputMode, any> {
+    return {
+        points: {
+            type: "simple-marker",
+            style: "circle",
+            size: 8,
+            color: [...color, 0.75],
+            outline: { color: [255, 255, 255], width: 1.25 }
+        },
+        line: {
+            type: "simple-line",
+            color: [...color, 0.9],
+            width: 2
+        },
+        polygon: {
+            type: "simple-fill",
+            color: [...color, 0.25],
+            outline: { color: [...color, 0.9], width: 2 }
+        }
+    };
+}
 
-/** Symbol of the line through the entered coordinates. */
-const LINE_SYMBOL = {
-    type: "simple-line",
-    color: [0, 92, 230, 0.9],
-    width: 2
-};
+/** The geometry of the current input is drawn in gray, ... */
+const SKETCH_SYMBOLS = createSymbols([92, 92, 92]);
 
-/** Symbol of the polygon spanned by the entered coordinates. */
-const POLYGON_SYMBOL = {
-    type: "simple-fill",
-    color: [0, 92, 230, 0.25],
-    outline: { color: [0, 92, 230, 0.9], width: 2 }
-};
+/** ... and what has been added to the persistent layer in blue. */
+const PERSISTENT_SYMBOLS = createSymbols([0, 92, 230]);
 
 /** Splits a line into its parts, accepting `7.1, 50.7` as well as `7.1 50.7`. */
 const SEPARATORS = /[\s,;]+/;
@@ -95,16 +104,25 @@ const DETECTION_RULES: DetectionRule[] = [
 ];
 
 /**
- * Turns the entered coordinates into graphics on an own layer, and keeps that
- * layer in sync with every edit.
+ * Turns the entered coordinates into graphics on a sketch layer kept in sync
+ * with every edit, and moves them over to a second layer once they are added.
  */
 export default class CoordinateInputController {
 
     declare private coordinateInputModel: InjectedReference<CoordinateInputModel>;
     declare private mapWidgetModel: InjectedReference<MapWidgetModel>;
+    declare private _i18n: InjectedReference<I18N<Messages>>;
 
     private readonly observers: Observers = createObservers();
-    private layer: GraphicsLayer | undefined;
+
+    /** Holds the geometry of the current input, replaced on every edit. */
+    private sketchLayer: GraphicsLayer | undefined;
+
+    /**
+     * Holds the geometries that have been added. Only "persistent" in contrast
+     * to the sketch layer: nothing is stored, so it is gone on reload.
+     */
+    private persistentLayer: GraphicsLayer | undefined;
 
     activate(): void {
         const model = this.coordinateInputModel!;
@@ -112,29 +130,88 @@ export default class CoordinateInputController {
             ...INPUT_PROPERTIES.map((property) => model.watch(property, () => this.onInputChanged()))
         );
 
-        this.layer = new GraphicsLayer({
-            id: LAYER_ID,
+        this.persistentLayer = new GraphicsLayer({
+            id: PERSISTENT_LAYER_ID,
+            title: this._i18n!.get().layerTitle
+        });
+        this.sketchLayer = new GraphicsLayer({
+            id: SKETCH_LAYER_ID,
+            // The sketch is a preview of the current input, not something to
+            // switch on and off, so it stays out of the table of contents.
             listMode: "hide"
         });
-        this.mapWidgetModel!.map.add(this.layer);
+        // The sketch goes on top, so the live input stays visible over what has
+        // already been added.
+        this.mapWidgetModel!.map.addMany([this.persistentLayer, this.sketchLayer]);
 
+        this.onAddedGeometriesChanged();
         this.onInputChanged();
     }
 
     deactivate(): void {
         this.observers.destroy();
-        if (this.layer) {
-            this.mapWidgetModel!.map.remove(this.layer);
-            this.layer = undefined;
-        }
+
+        const layers = [this.persistentLayer, this.sketchLayer].filter(Boolean) as GraphicsLayer[];
+        this.mapWidgetModel!.map.removeMany(layers);
+        this.persistentLayer = undefined;
+        this.sketchLayer = undefined;
     }
 
     /**
-     * Moves the view onto the entered geometries. Does nothing while there is
-     * nothing to zoom to.
+     * Hands the geometry of the current input over to the persistent layer and
+     * clears the input, ready for the next geometry. Does nothing while the
+     * input holds no geometry.
+     */
+    addGeometry(): void {
+        const model = this.coordinateInputModel!;
+        const sketched = this.sketchLayer!.graphics.toArray();
+        if (sketched.length === 0) {
+            return;
+        }
+
+        // Removing them from the sketch layer first, as a graphic can only be on
+        // one layer at a time.
+        this.sketchLayer!.graphics.removeAll();
+        for (const graphic of sketched) {
+            graphic.symbol = PERSISTENT_SYMBOLS[model.mode];
+        }
+        this.persistentLayer!.graphics.addMany(sketched);
+        this.onAddedGeometriesChanged();
+
+        // Only the coordinates are cleared: mode and reference system are
+        // settings, and keeping them saves reselecting them for the next entry.
+        model.coordinates = "";
+    }
+
+    /**
+     * Drops everything that has been added. The layer itself stays on the map,
+     * it just goes back to being empty and unlisted.
+     */
+    clearGeometries(): void {
+        this.persistentLayer!.graphics.removeAll();
+        this.onAddedGeometriesChanged();
+    }
+
+    /**
+     * Called whenever the content of the persistent layer changed.
+     *
+     * The layer is listed in the table of contents only while it holds
+     * something, so an empty layer does not sit there with nothing to show.
+     */
+    private onAddedGeometriesChanged(): void {
+        const layer = this.persistentLayer!;
+        const hasAddedGeometries = layer.graphics.length > 0;
+
+        layer.listMode = hasAddedGeometries ? "show" : "hide";
+        this.coordinateInputModel!.hasAddedGeometries = hasAddedGeometries;
+    }
+
+    /**
+     * Moves the view onto the geometry of the current input. Does nothing while
+     * there is nothing to zoom to.
      */
     zoomToExtent(): void {
-        const graphics = this.layer?.graphics;
+        const graphics = this.sketchLayer?.graphics;
         const view = this.mapWidgetModel!.view;
         if (!view || !graphics || graphics.length === 0) {
             return;
@@ -165,7 +242,7 @@ export default class CoordinateInputController {
             ? createGraphics(mode, parsedCoordinates, spatialReference)
             : [];
 
-        const layer = this.layer!;
+        const layer = this.sketchLayer!;
         layer.graphics.removeAll();
         layer.graphics.addMany(graphics);
 
@@ -272,7 +349,7 @@ function createGraphics(mode: CoordinateInputMode, coordinates: Coordinate[],
 function createPointGraphics(coordinates: Coordinate[], spatialReference: SpatialReference): Graphic[] {
     return coordinates.map(([x, y]) => new Graphic({
         geometry: new Point({ x, y, spatialReference }),
-        symbol: POINT_SYMBOL as any
+        symbol: SKETCH_SYMBOLS.points
     }));
 }
 
@@ -283,7 +360,7 @@ function createLineGraphics(coordinates: Coordinate[], spatialReference: Spatial
     }
 
     const geometry = new Polyline({ paths: [coordinates], spatialReference });
-    return [new Graphic({ geometry, symbol: LINE_SYMBOL as any })];
+    return [new Graphic({ geometry, symbol: SKETCH_SYMBOLS.line })];
 }
 
 /** Spans a single ring over the coordinates, which needs at least three of them. */
@@ -299,7 +376,7 @@ function createPolygonGraphics(coordinates: Coordinate[], spatialReference: Spat
         geometry.rings = [[...ring].reverse()];
     }
 
-    return [new Graphic({ geometry, symbol: POLYGON_SYMBOL as any })];
+    return [new Graphic({ geometry, symbol: SKETCH_SYMBOLS.polygon })];
 }
 
 /** Repeats the first coordinate at the end, as a polygon ring has to be closed. */

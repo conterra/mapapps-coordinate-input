@@ -7,8 +7,13 @@ reference system they are given in.
 
 Add `dn_coordinate_input` to the `allowedBundles` of your app and add `coordinateInputToggleTool` to a toolset.
 
-The entered geometries are drawn on an own graphics layer and updated on every keystroke. **Zoom to extent** moves
-the map onto them.
+The geometry of the current input is drawn in grey on a sketch layer and updated on every keystroke. **Zoom to
+extent** moves the map onto it, and **Add** hands it over to a second layer, where it stays in blue while the
+input is cleared for the next geometry.
+
+That second layer appears in the table of contents as soon as it holds something, so it can be switched off like
+any other layer, and disappears from it again once **Clear** has emptied it. It is not stored anywhere, so it is
+gone on reload.
 
 ## Configuration
 

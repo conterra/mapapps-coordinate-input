@@ -20,6 +20,7 @@ export default {
     bundleName: "Hallo Welt",
     bundleDescription: "Dieses Bundle erlaubt den Import einer Liste von Koordinaten in ein Layer.",
     windowTitle: "Koordinateneingabe",
+    layerTitle: "Eingegebene Koordinaten",
     tool: {
         title: "Koordinateneingabe",
         tooltip: "Koordinaten importieren"
@@ -38,6 +39,8 @@ export default {
             label: "Referenzsystem",
             auto: "Automatisch"
         },
-        zoomToExtent: "Auf Ausdehnung zoomen"
+        zoomToExtent: "Auf Ausdehnung zoomen",
+        addGeometry: "Hinzufügen",
+        clearGeometries: "Leeren"
     }
 } satisfies Messages;

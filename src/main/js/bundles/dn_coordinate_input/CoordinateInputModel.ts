@@ -75,6 +75,14 @@ export const CoordinateInputModel = declare({
         required: true as const
     },
 
+    /**
+     * Whether any geometry has been added so far. Written by the controller.
+     */
+    hasAddedGeometries: {
+        value: false,
+        required: true as const
+    },
+
     /** Resets all three inputs to their initial state. */
     reset(): void {
         this.coordinates = "";

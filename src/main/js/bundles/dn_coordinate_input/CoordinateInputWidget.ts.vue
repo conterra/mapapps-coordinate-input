@@ -60,14 +60,37 @@
 
         <div class="dn-coordinate-input__actions">
             <v-btn
+                :disabled="!hasAddedGeometries"
+                class="dn-coordinate-input__clear"
+                color="primary"
+                outline
+                @click="$emit('clear-geometries')"
+            >
+                <v-icon left>
+                    icon-trashcan
+                </v-icon>
+                {{ i18n.ui.clearGeometries }}
+            </v-btn>
+            <v-btn
                 :disabled="!hasGeometry"
                 color="primary"
+                outline
                 @click="$emit('zoom-to-extent')"
             >
                 <v-icon left>
                     icon-zoom-in-extent
                 </v-icon>
                 {{ i18n.ui.zoomToExtent }}
+            </v-btn>
+            <v-btn
+                :disabled="!hasGeometry"
+                color="primary"
+                @click="$emit('add-geometry')"
+            >
+                <v-icon left>
+                    icon-plus
+                </v-icon>
+                {{ i18n.ui.addGeometry }}
             </v-btn>
         </div>
     </div>
@@ -106,7 +129,8 @@
                 mode: "points" as CoordinateInputMode,
                 referenceSystem: AUTO_REFERENCE_SYSTEM,
                 referenceSystems: [] as ReferenceSystem[],
-                hasGeometry: false
+                hasGeometry: false,
+                hasAddedGeometries: false
             };
         },
         computed: {

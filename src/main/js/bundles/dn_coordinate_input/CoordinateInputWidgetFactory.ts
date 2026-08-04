@@ -38,11 +38,13 @@ export default class CoordinateInputWidgetFactory {
         const binding = Binding
             .for(this.coordinateInputModel as any, vm)
             .syncAll("coordinates", "mode", "referenceSystem")
-            .syncAllToRight("referenceSystems", "hasGeometry")
+            .syncAllToRight("referenceSystems", "hasGeometry", "hasAddedGeometries")
             .enable()
             .syncToRightNow();
 
         vm.$on("zoom-to-extent", () => controller.zoomToExtent());
+        vm.$on("add-geometry", () => controller.addGeometry());
+        vm.$on("clear-geometries", () => controller.clearGeometries());
 
         const widget = VueDijit(vm);
         widget.own(binding);

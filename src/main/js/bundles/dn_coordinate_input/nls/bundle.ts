@@ -19,6 +19,7 @@ const i18n = {
         bundleName: "Coordinate Input",
         bundleDescription: "This bundle allows importing of lists of coordinates into a layer",
         windowTitle: "Coordinate Input",
+        layerTitle: "Entered coordinates",
         tool: {
             title: "Coordinate Input",
             tooltip: "Import coordinates"
@@ -37,7 +38,9 @@ const i18n = {
                 label: "Reference system",
                 auto: "Auto"
             },
-            zoomToExtent: "Zoom to extent"
+            zoomToExtent: "Zoom to extent",
+            addGeometry: "Add",
+            clearGeometries: "Clear"
         }
     },
     de: true
