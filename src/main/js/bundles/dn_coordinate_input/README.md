@@ -7,6 +7,9 @@ reference system they are given in.
 
 Add `dn_coordinate_input` to the `allowedBundles` of your app and add `coordinateInputToggleTool` to a toolset.
 
+The entered geometries are drawn on an own graphics layer and updated on every keystroke. **Zoom to extent** moves
+the map onto them.
+
 ## Configuration
 
 Configure the reference systems offered in the selection through `Config`. Every entry has an `id`

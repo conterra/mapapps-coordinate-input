@@ -67,6 +67,14 @@ export const CoordinateInputModel = declare({
         ] as ReferenceSystem[]
     },
 
+    /**
+     * Whether the current input yields any geometry. Written by the controller.
+     */
+    hasGeometry: {
+        value: false,
+        required: true as const
+    },
+
     /** Resets all three inputs to their initial state. */
     reset(): void {
         this.coordinates = "";

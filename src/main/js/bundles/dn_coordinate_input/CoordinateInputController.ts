@@ -20,6 +20,7 @@ import Point from "@arcgis/core/geometry/Point";
 import Polygon from "@arcgis/core/geometry/Polygon";
 import Polyline from "@arcgis/core/geometry/Polyline";
 import SpatialReference from "@arcgis/core/geometry/SpatialReference";
+import { loggerForName } from "apprt-core/Logger";
 import { createObservers, type Observers } from "apprt-core/Observers";
 import type { InjectedReference } from "apprt-core/InjectedReference";
 import type { MapWidgetModel } from "map-widget/api";
@@ -37,6 +38,8 @@ import {
 const INPUT_PROPERTIES = ["coordinates", "mode", "referenceSystem"] as const;
 
 const LAYER_ID = "dn_coordinate_input";
+
+const LOG = loggerForName("dn_coordinate_input/CoordinateInputController");
 
 /** Symbol of the entered points. */
 const POINT_SYMBOL = {
@@ -127,11 +130,34 @@ export default class CoordinateInputController {
     }
 
     /**
+     * Moves the view onto the entered geometries. Does nothing while there is
+     * nothing to zoom to.
+     */
+    zoomToExtent(): void {
+        const graphics = this.layer?.graphics;
+        const view = this.mapWidgetModel!.view;
+        if (!view || !graphics || graphics.length === 0) {
+            return;
+        }
+
+        // Handing over the graphics instead of an extent lets goTo keep the
+        // current scale for a single point, which spans no extent to zoom to.
+        view.goTo(graphics.toArray()).catch((error: Error) => {
+            // goTo rejects once its animation is interrupted, e.g. by the user
+            // panning the map while it runs. That is not worth reporting.
+            if (error.name !== "AbortError") {
+                LOG.error("Failed to zoom to the entered coordinates", error);
+            }
+        });
+    }
+
+    /**
      * Called whenever one of the widget's inputs changed. Replaces the layer's
      * content with whatever can be read from the current input.
      */
     private onInputChanged(): void {
-        const { coordinates, mode, referenceSystem, referenceSystems } = this.coordinateInputModel!;
+        const model = this.coordinateInputModel!;
+        const { coordinates, mode, referenceSystem, referenceSystems } = model;
 
         const parsedCoordinates = parseCoordinates(coordinates);
         const spatialReference = resolveSpatialReference(referenceSystem, parsedCoordinates, referenceSystems);
@@ -142,6 +168,8 @@ export default class CoordinateInputController {
         const layer = this.layer!;
         layer.graphics.removeAll();
         layer.graphics.addMany(graphics);
+
+        model.hasGeometry = graphics.length > 0;
     }
 
 }

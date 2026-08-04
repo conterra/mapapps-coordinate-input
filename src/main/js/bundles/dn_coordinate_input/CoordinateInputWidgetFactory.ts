@@ -20,24 +20,29 @@ import Binding from "apprt-binding/Binding";
 import type { InjectedReference } from "apprt-core/InjectedReference";
 import type { I18N } from "apprt/api";
 import CoordinateInputWidget from "./CoordinateInputWidget.ts.vue";
+import type CoordinateInputController from "./CoordinateInputController";
 import type { CoordinateInputModel } from "./CoordinateInputModel";
 import type { Messages } from "./nls/bundle";
 
 export default class CoordinateInputWidgetFactory {
 
     declare private coordinateInputModel: InjectedReference<CoordinateInputModel>;
+    declare private coordinateInputController: InjectedReference<CoordinateInputController>;
     declare private _i18n: InjectedReference<I18N<Messages>>;
 
     createInstance(): any {
+        const controller = this.coordinateInputController!;
         const vm: any = new Vue(CoordinateInputWidget as any);
         vm.i18n = this._i18n!.get();
 
         const binding = Binding
             .for(this.coordinateInputModel as any, vm)
             .syncAll("coordinates", "mode", "referenceSystem")
-            .syncAllToRight("referenceSystems")
+            .syncAllToRight("referenceSystems", "hasGeometry")
             .enable()
             .syncToRightNow();
+
+        vm.$on("zoom-to-extent", () => controller.zoomToExtent());
 
         const widget = VueDijit(vm);
         widget.own(binding);

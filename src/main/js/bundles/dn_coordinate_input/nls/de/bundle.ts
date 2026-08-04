@@ -37,6 +37,7 @@ export default {
         referenceSystem: {
             label: "Referenzsystem",
             auto: "Automatisch"
-        }
+        },
+        zoomToExtent: "Auf Ausdehnung zoomen"
     }
 } satisfies Messages;

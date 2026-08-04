@@ -57,6 +57,19 @@
                 hide-details
             />
         </div>
+
+        <div class="dn-coordinate-input__actions">
+            <v-btn
+                :disabled="!hasGeometry"
+                color="primary"
+                @click="$emit('zoom-to-extent')"
+            >
+                <v-icon left>
+                    icon-zoom-in-extent
+                </v-icon>
+                {{ i18n.ui.zoomToExtent }}
+            </v-btn>
+        </div>
     </div>
 </template>
 
@@ -92,7 +105,8 @@
                 coordinates: "",
                 mode: "points" as CoordinateInputMode,
                 referenceSystem: AUTO_REFERENCE_SYSTEM,
-                referenceSystems: [] as ReferenceSystem[]
+                referenceSystems: [] as ReferenceSystem[],
+                hasGeometry: false
             };
         },
         computed: {

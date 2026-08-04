@@ -57,6 +57,9 @@
         },
         {
             "name": "CoordinateInputController",
+            "provides": [
+                "dn_coordinate_input.CoordinateInputController"
+            ],
             "immediate": true,
             "references": [
                 {
@@ -82,6 +85,10 @@
                 {
                     "name": "coordinateInputModel",
                     "providing": "dn_coordinate_input.CoordinateInputModel"
+                },
+                {
+                    "name": "coordinateInputController",
+                    "providing": "dn_coordinate_input.CoordinateInputController"
                 }
             ]
         },

@@ -36,7 +36,8 @@ const i18n = {
             referenceSystem: {
                 label: "Reference system",
                 auto: "Auto"
-            }
+            },
+            zoomToExtent: "Zoom to extent"
         }
     },
     de: true

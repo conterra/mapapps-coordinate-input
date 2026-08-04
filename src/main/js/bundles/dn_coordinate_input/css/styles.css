@@ -31,8 +31,20 @@
 }
 
 .dn-coordinate-input__modes,
-.dn-coordinate-input__reference-system {
+.dn-coordinate-input__reference-system,
+.dn-coordinate-input__actions {
     flex: 0 0 auto;
+}
+
+/* Park the actions at the trailing edge, and drop the button's own margins so
+   it lines up with the inputs above it. */
+.dn-coordinate-input__actions {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.dn-coordinate-input__actions .v-btn {
+    margin: 0;
 }
 
 .dn-coordinate-input__coordinates {
