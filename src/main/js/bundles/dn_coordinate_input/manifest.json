@@ -6,6 +6,7 @@
     "productName": "devnet-mapapps-coordinate-input",
     "vendor": "con terra GmbH",
     "main": "",
+    "layer": "module",
     "keywords": [
         "sample"
     ],
@@ -13,9 +14,53 @@
         "bundle"
     ],
     "dependencies": {
-        "ct": "^4.16.0"
+        "ct": "^4.16.0",
+        "apprt-vue": "^4.20.0",
+        "apprt-vuetify": "^4.20.0"
     },
+    "layout-widgets": [
+        {
+            "widgetRole": "coordinateInputWidget",
+            "window": {
+                "title": "${windowTitle}",
+                "dockTool": "coordinateInputToggleTool",
+                "minimizeOnClose": true,
+                "closable": true,
+                "marginBox": {
+                    "w": 400,
+                    "h": 300,
+                    "t": 80,
+                    "l": 80
+                }
+            }
+        }
+    ],
     "components": [
-
+        {
+            "name": "CoordinateInputWidgetFactory",
+            "provides": [
+                "dijit.Widget"
+            ],
+            "instanceFactory": true,
+            "properties": {
+                "widgetRole": "coordinateInputWidget"
+            }
+        },
+        {
+            "name": "CoordinateInputToggleTool",
+            "impl": "ct/tools/Tool",
+            "provides": [
+                "ct.tools.Tool"
+            ],
+            "propertiesConstructor": true,
+            "properties": {
+                "id": "coordinateInputToggleTool",
+                "title": "${tool.title}",
+                "tooltip": "${tool.tooltip}",
+                "iconClass": "icon-marker-add",
+                "toolRole": "toolset",
+                "togglable": true
+            }
+        }
     ]
 }

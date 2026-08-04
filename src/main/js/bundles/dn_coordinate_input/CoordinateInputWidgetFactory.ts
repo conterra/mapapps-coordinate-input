@@ -14,21 +14,15 @@
 /// limitations under the License.
 ///
 
-const i18n = {
-    root: {
-        bundleName: "Coordinate Input",
-        bundleDescription: "This bundle allows importing of lists of coordinates into a layer",
-        windowTitle: "Coordinate Input",
-        tool: {
-            title: "Coordinate Input",
-            tooltip: "Import coordinates"
-        }
-    },
-    de: true
-};
+import Vue from "apprt-vue/Vue";
+import VueDijit from "apprt-vue/VueDijit";
+import CoordinateInputWidget from "./CoordinateInputWidget.ts.vue";
 
-export type Messages = (typeof i18n)["root"];
-export interface MessagesReference {
-    get: () => Messages
+export default class CoordinateInputWidgetFactory {
+
+    createInstance(): any {
+        const vm = new Vue(CoordinateInputWidget);
+        return VueDijit(vm);
+    }
+
 }
-export default i18n;

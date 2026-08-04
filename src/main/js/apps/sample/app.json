@@ -455,7 +455,8 @@
                             "selection-ui-tool",
                             "sketchToggleTool",
                             "measuring_tools",
-                            "printingToggleTool"
+                            "printingToggleTool",
+                            "coordinateInputToggleTool"
                         ],
                         "registerWidget": {
                             "widgetRole": "drawer_button"

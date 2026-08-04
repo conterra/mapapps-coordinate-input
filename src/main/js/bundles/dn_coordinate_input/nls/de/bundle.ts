@@ -18,5 +18,10 @@ import { Messages } from "../bundle";
 
 export default {
     bundleName: "Hallo Welt",
-    bundleDescription: "Dieses Bundle erlaubt den Import einer Liste von Koordinaten in ein Layer."
+    bundleDescription: "Dieses Bundle erlaubt den Import einer Liste von Koordinaten in ein Layer.",
+    windowTitle: "Koordinateneingabe",
+    tool: {
+        title: "Koordinateneingabe",
+        tooltip: "Koordinaten importieren"
+    }
 } satisfies Messages;
