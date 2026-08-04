@@ -16,13 +16,32 @@
 
 import Vue from "apprt-vue/Vue";
 import VueDijit from "apprt-vue/VueDijit";
+import Binding from "apprt-binding/Binding";
+import type { InjectedReference } from "apprt-core/InjectedReference";
+import type { I18N } from "apprt/api";
 import CoordinateInputWidget from "./CoordinateInputWidget.ts.vue";
+import type { CoordinateInputModel } from "./CoordinateInputModel";
+import type { Messages } from "./nls/bundle";
 
 export default class CoordinateInputWidgetFactory {
 
+    declare private coordinateInputModel: InjectedReference<CoordinateInputModel>;
+    declare private _i18n: InjectedReference<I18N<Messages>>;
+
     createInstance(): any {
-        const vm = new Vue(CoordinateInputWidget);
-        return VueDijit(vm);
+        const vm: any = new Vue(CoordinateInputWidget as any);
+        vm.i18n = this._i18n!.get();
+
+        const binding = Binding
+            .for(this.coordinateInputModel as any, vm)
+            .syncAll("coordinates", "mode", "referenceSystem")
+            .syncAllToRight("referenceSystems")
+            .enable()
+            .syncToRightNow();
+
+        const widget = VueDijit(vm);
+        widget.own(binding);
+        return widget;
     }
 
 }

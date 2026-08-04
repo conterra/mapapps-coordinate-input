@@ -14,4 +14,5 @@
 /// limitations under the License.
 ///
 
+export { CoordinateInputModel as Config } from "./CoordinateInputModel";
 export { default as CoordinateInputWidgetFactory } from "./CoordinateInputWidgetFactory";

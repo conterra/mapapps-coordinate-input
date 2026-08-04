@@ -22,6 +22,21 @@ const i18n = {
         tool: {
             title: "Coordinate Input",
             tooltip: "Import coordinates"
+        },
+        ui: {
+            modes: {
+                points: "Points",
+                line: "Line",
+                polygon: "Polygon"
+            },
+            coordinates: {
+                label: "Coordinates",
+                placeholder: "One coordinate pair per line, e.g.\n7.0982, 50.7374\n7.1123, 50.7401"
+            },
+            referenceSystem: {
+                label: "Reference system",
+                auto: "Auto"
+            }
         }
     },
     de: true

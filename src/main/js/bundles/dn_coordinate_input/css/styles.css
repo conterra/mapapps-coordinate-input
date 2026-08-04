@@ -1,0 +1,65 @@
+/*
+ * Copyright (C) 2025 con terra GmbH (info@conterra.de)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/* The window sizes .dijitDialogPaneContent, but the Vue wrapper in between has an
+   auto height, so "height: 100%" on the widget would not resolve without this. */
+.coordinateInputWidget .vue-base {
+    height: 100%;
+}
+
+/* Stack mode toggle, coordinate text and reference system selection vertically
+   and let the coordinate text take all remaining space. */
+.dn-coordinate-input {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    /* The window already provides the outer padding. */
+    height: 100%;
+    padding: 0;
+}
+
+.dn-coordinate-input__modes,
+.dn-coordinate-input__reference-system {
+    flex: 0 0 auto;
+}
+
+.dn-coordinate-input__coordinates {
+    display: flex;
+    /* min-height: 0 lets the textarea shrink below its "rows" height. */
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+/* Stretch the textarea through Vuetify's input wrappers down to the textarea.
+   Done with flex stretching rather than "height: 100%", because a percentage
+   height does not resolve against a parent that is itself sized by flex.
+   This stylesheet is injected before the Vuetify styles, so !important is needed
+   to override Vuetify's own rules for these internal input elements. */
+.dn-coordinate-input__coordinates > .v-input,
+.dn-coordinate-input__coordinates .v-input__slot {
+    align-items: stretch !important;
+}
+
+.dn-coordinate-input__coordinates .v-input__control,
+.dn-coordinate-input__coordinates .v-input__slot,
+.dn-coordinate-input__coordinates .v-text-field__slot {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+}
+
+.dn-coordinate-input__coordinates textarea {
+    font-family: monospace;
+}

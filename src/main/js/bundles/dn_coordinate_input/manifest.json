@@ -15,9 +15,19 @@
     ],
     "dependencies": {
         "ct": "^4.16.0",
+        "apprt-binding": "^4.16.0",
+        "apprt-core": "^4.20.0",
         "apprt-vue": "^4.20.0",
         "apprt-vuetify": "^4.20.0"
     },
+    "cssThemesExtension": [
+        {
+            "name": "*",
+            "files": [
+                "css/styles.css"
+            ]
+        }
+    ],
     "layout-widgets": [
         {
             "widgetRole": "coordinateInputWidget",
@@ -28,7 +38,7 @@
                 "closable": true,
                 "marginBox": {
                     "w": 400,
-                    "h": 300,
+                    "h": 420,
                     "t": 80,
                     "l": 80
                 }
@@ -37,6 +47,13 @@
     ],
     "components": [
         {
+            "name": "Config",
+            "provides": [
+                "dn_coordinate_input.CoordinateInputModel"
+            ],
+            "propertiesConstructor": true
+        },
+        {
             "name": "CoordinateInputWidgetFactory",
             "provides": [
                 "dijit.Widget"
@@ -44,7 +61,13 @@
             "instanceFactory": true,
             "properties": {
                 "widgetRole": "coordinateInputWidget"
-            }
+            },
+            "references": [
+                {
+                    "name": "coordinateInputModel",
+                    "providing": "dn_coordinate_input.CoordinateInputModel"
+                }
+            ]
         },
         {
             "name": "CoordinateInputToggleTool",

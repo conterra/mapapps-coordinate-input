@@ -16,11 +16,101 @@
 
 -->
 <template>
-    <v-container class="dn-coordinate-input" />
+    <div class="dn-coordinate-input">
+        <div class="dn-coordinate-input__modes">
+            <v-btn-toggle
+                v-model="mode"
+                mandatory
+            >
+                <v-btn
+                    v-for="option in modeOptions"
+                    :key="option.value"
+                    :value="option.value"
+                    :title="option.title"
+                    flat
+                >
+                    <v-icon left>
+                        {{ option.icon }}
+                    </v-icon>
+                    {{ option.title }}
+                </v-btn>
+            </v-btn-toggle>
+        </div>
+
+        <div class="dn-coordinate-input__coordinates">
+            <v-textarea
+                v-model="coordinates"
+                :label="i18n.ui.coordinates.label"
+                :placeholder="i18n.ui.coordinates.placeholder"
+                rows="6"
+                outline
+                no-resize
+                hide-details
+            />
+        </div>
+
+        <div class="dn-coordinate-input__reference-system">
+            <v-select
+                v-model="referenceSystem"
+                :items="referenceSystemItems"
+                :label="i18n.ui.referenceSystem.label"
+                hide-details
+            />
+        </div>
+    </div>
 </template>
 
 <script lang="ts">
-    export default {
-        name: "coordinate-input-widget"
-    };
+    import Vue from "apprt-vue/Vue";
+    import type { PropType } from "vue";
+    import Bindable from "apprt-vue/mixins/Bindable";
+    import { AUTO_REFERENCE_SYSTEM, type CoordinateInputMode, type ReferenceSystem } from "./CoordinateInputModel";
+    import type { Messages } from "./nls/bundle";
+
+    interface ModeOption {
+        value: CoordinateInputMode;
+        title: string;
+        icon: string;
+    }
+
+    interface SelectItem {
+        text: string;
+        value: string;
+    }
+
+    export default Vue.extend({
+        name: "coordinate-input-widget",
+        mixins: [Bindable],
+        props: {
+            i18n: {
+                type: Object as PropType<Messages>,
+                required: true
+            }
+        },
+        data() {
+            return {
+                coordinates: "",
+                mode: "points" as CoordinateInputMode,
+                referenceSystem: AUTO_REFERENCE_SYSTEM,
+                referenceSystems: [] as ReferenceSystem[]
+            };
+        },
+        computed: {
+            modeOptions(): ModeOption[] {
+                const modes = this.i18n.ui.modes;
+                return [
+                    { value: "points", title: modes.points, icon: "icon-draw-point" },
+                    { value: "line", title: modes.line, icon: "icon-polyline" },
+                    { value: "polygon", title: modes.polygon, icon: "icon-polygon" }
+                ];
+            },
+            referenceSystemItems(): SelectItem[] {
+                const autoTitle = this.i18n.ui.referenceSystem.auto;
+                return this.referenceSystems.map(({ id, title }) => {
+                    const text = id === AUTO_REFERENCE_SYSTEM ? autoTitle : (title ?? id);
+                    return { text, value: id };
+                });
+            }
+        }
+    });
 </script>

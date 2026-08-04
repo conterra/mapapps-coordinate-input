@@ -23,5 +23,20 @@ export default {
     tool: {
         title: "Koordinateneingabe",
         tooltip: "Koordinaten importieren"
+    },
+    ui: {
+        modes: {
+            points: "Punkte",
+            line: "Linie",
+            polygon: "Polygon"
+        },
+        coordinates: {
+            label: "Koordinaten",
+            placeholder: "Ein Koordinatenpaar pro Zeile, z. B.\n7.0982, 50.7374\n7.1123, 50.7401"
+        },
+        referenceSystem: {
+            label: "Referenzsystem",
+            auto: "Automatisch"
+        }
     }
 } satisfies Messages;
