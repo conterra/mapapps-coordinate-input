@@ -38,6 +38,11 @@
     flex: 0 0 auto;
 }
 
+.dn-coordinate-input__modes {
+    display: flex;
+    justify-content: center;
+}
+
 /* The actions on the current input follow it at the trailing edge. */
 .dn-coordinate-input__input-actions {
     display: flex;
