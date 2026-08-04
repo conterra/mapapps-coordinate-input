@@ -69,6 +69,11 @@
                 {
                     "name": "mapWidgetModel",
                     "providing": "map-widget.MapWidgetModel"
+                },
+                {
+                    "name": "coordinateInputTool",
+                    "providing": "ct.tools.Tool",
+                    "filter": "(id=coordinateInputToggleTool)"
                 }
             ]
         },

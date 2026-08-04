@@ -24,6 +24,7 @@ import { loggerForName } from "apprt-core/Logger";
 import { createObservers, type Observers } from "apprt-core/Observers";
 import type { InjectedReference } from "apprt-core/InjectedReference";
 import type { I18N } from "apprt/api";
+import type Tool from "ct/tools/Tool";
 import type { MapWidgetModel } from "map-widget/api";
 import {
     AUTO_REFERENCE_SYSTEM,
@@ -111,6 +112,7 @@ export default class CoordinateInputController {
 
     declare private coordinateInputModel: InjectedReference<CoordinateInputModel>;
     declare private mapWidgetModel: InjectedReference<MapWidgetModel>;
+    declare private coordinateInputTool: InjectedReference<Tool>;
     declare private _i18n: InjectedReference<I18N<Messages>>;
 
     private readonly observers: Observers = createObservers();
@@ -127,7 +129,14 @@ export default class CoordinateInputController {
     activate(): void {
         const model = this.coordinateInputModel!;
         this.observers.add(
-            ...INPUT_PROPERTIES.map((property) => model.watch(property, () => this.onInputChanged()))
+            ...INPUT_PROPERTIES.map((property) => model.watch(property, () => this.onInputChanged())),
+            // The tool's active state follows the widget's window, so this fires
+            // when the window is closed as well as when it is reopened.
+            this.coordinateInputTool!.watch("active", (_name, _oldValue, active) => {
+                if (!active) {
+                    this.onWidgetClosed();
+                }
+            })
         );
 
         this.persistentLayer = new GraphicsLayer({
@@ -190,6 +199,13 @@ export default class CoordinateInputController {
     clearGeometries(): void {
         this.persistentLayer!.graphics.removeAll();
         this.onAddedGeometriesChanged();
+    }
+
+    /**
+     * Clear sketch layer when widget is closed by clearing coordinate input.
+     */
+    private onWidgetClosed(): void {
+        this.coordinateInputModel!.coordinates = "";
     }
 
     /**
