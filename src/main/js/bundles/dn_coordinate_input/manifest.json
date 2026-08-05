@@ -15,8 +15,8 @@
     ],
     "dependencies": {
         "@arcgis/core": "~4.33.14",
-        "ct": "^4.16.0",
-        "apprt-binding": "^4.16.0",
+        "ct": "^4.20.0",
+        "apprt-binding": "^4.20.0",
         "apprt-core": "^4.20.0",
         "apprt-vue": "^4.20.0",
         "apprt-vuetify": "^4.20.0",
@@ -39,10 +39,10 @@
                 "minimizeOnClose": true,
                 "closable": true,
                 "marginBox": {
-                    "w": 400,
+                    "w": 393,
                     "h": 420,
-                    "t": 80,
-                    "l": 80
+                    "t": 125,
+                    "l": 20
                 }
             }
         }
@@ -108,7 +108,7 @@
                 "id": "coordinateInputToggleTool",
                 "title": "${tool.title}",
                 "tooltip": "${tool.tooltip}",
-                "iconClass": "icon-marker-add",
+                "iconClass": "icon-coordinate-finder",
                 "toolRole": "toolset",
                 "togglable": true
             }
