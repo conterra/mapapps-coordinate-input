@@ -99,6 +99,24 @@ export const CoordinateInputModel = declare({
         required: true as const
     },
 
+    /**
+     * How many lines of the current input hold something that could not be read
+     * as a coordinate. Blank lines do not count. Written by the controller.
+     */
+    skippedLineCount: {
+        value: 0,
+        required: true as const
+    },
+
+    /**
+     * Whether the automatic detection could not settle on a reference system for
+     * the current input.
+     */
+    unknownReferenceSystem: {
+        value: false,
+        required: true as const
+    },
+
     /** Resets all three inputs to their initial state. */
     reset(): void {
         this.coordinates = "";

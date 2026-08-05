@@ -58,6 +58,13 @@
             />
         </div>
 
+        <p
+            class="dn-coordinate-input__message"
+            aria-live="polite"
+        >
+            {{ message }}
+        </p>
+
         <div class="dn-coordinate-input__input-actions">
             <v-btn
                 :aria-label="i18n.ui.zoomToExtent"
@@ -109,6 +116,7 @@
     import Vue from "apprt-vue/Vue";
     import type { PropType } from "vue";
     import Bindable from "apprt-vue/mixins/Bindable";
+    import replace from "apprt-core/string-replace";
     import { AUTO_REFERENCE_SYSTEM, type CoordinateInputMode, type ReferenceSystem } from "./CoordinateInputModel";
     import type { Messages } from "./nls/bundle";
 
@@ -139,10 +147,25 @@
                 referenceSystem: AUTO_REFERENCE_SYSTEM,
                 referenceSystems: [] as ReferenceSystem[],
                 hasGeometry: false,
-                addedGeometryCount: 0
+                addedGeometryCount: 0,
+                skippedLineCount: 0,
+                unknownReferenceSystem: false
             };
         },
         computed: {
+            message(): string {
+                const messages = this.i18n.ui.messages;
+                if (this.unknownReferenceSystem) {
+                    return messages.unknownReferenceSystem;
+                }
+                if (this.skippedLineCount === 1) {
+                    return messages.skippedLine;
+                }
+                if (this.skippedLineCount > 1) {
+                    return replace(messages.skippedLines, { count: this.skippedLineCount });
+                }
+                return "";
+            },
             modeOptions(): ModeOption[] {
                 const modes = this.i18n.ui.modes;
                 return [

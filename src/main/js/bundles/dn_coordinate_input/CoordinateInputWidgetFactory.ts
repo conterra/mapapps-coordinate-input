@@ -38,7 +38,8 @@ export default class CoordinateInputWidgetFactory {
         const binding = Binding
             .for(this.coordinateInputModel as any, vm)
             .syncAll("coordinates", "mode", "referenceSystem")
-            .syncAllToRight("referenceSystems", "hasGeometry", "addedGeometryCount")
+            .syncAllToRight("referenceSystems", "hasGeometry", "addedGeometryCount",
+                "skippedLineCount", "unknownReferenceSystem")
             .enable()
             .syncToRightNow();
 

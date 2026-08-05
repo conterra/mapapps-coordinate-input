@@ -42,6 +42,11 @@ export default {
         zoomToExtent: "Auf Ausdehnung zoomen",
         addGeometry: "Hinzufügen",
         addedGeometries: "Hinzugefügte Geometrien",
-        clearGeometries: "Leeren"
+        clearGeometries: "Leeren",
+        messages: {
+            unknownReferenceSystem: "Referenzsystem konnte nicht bestimmt werden.",
+            skippedLine: "1 Zeile konnte nicht gelesen werden.",
+            skippedLines: "${count} Zeilen konnten nicht gelesen werden."
+        }
     }
 } satisfies Messages;

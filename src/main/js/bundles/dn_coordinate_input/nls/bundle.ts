@@ -41,7 +41,12 @@ const i18n = {
             zoomToExtent: "Zoom to extent",
             addGeometry: "Add",
             addedGeometries: "Added geometries",
-            clearGeometries: "Clear"
+            clearGeometries: "Clear",
+            messages: {
+                unknownReferenceSystem: "Reference system could not be determined.",
+                skippedLine: "1 line could not be read.",
+                skippedLines: "${count} lines could not be read."
+            }
         }
     },
     de: true

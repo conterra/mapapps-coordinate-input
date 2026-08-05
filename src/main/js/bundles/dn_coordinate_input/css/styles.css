@@ -32,10 +32,19 @@
 
 .dn-coordinate-input__modes,
 .dn-coordinate-input__reference-system,
+.dn-coordinate-input__message,
 .dn-coordinate-input__input-actions,
 .dn-coordinate-input__added,
 .dn-coordinate-input > .v-divider {
     flex: 0 0 auto;
+}
+
+.dn-coordinate-input__message {
+    color: #b3261e;
+    font-size: 13px;
+    line-height: 1.4;
+    margin: 0;
+    min-height: 1.4em;
 }
 
 .dn-coordinate-input__modes {

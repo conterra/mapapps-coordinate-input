@@ -7,6 +7,10 @@ reference system they are given in.
 
 Add `dn_coordinate_input` to the `allowedBundles` of your app and add `coordinateInputToggleTool` to a toolset.
 
+To enter coordinates, write them into the text field. One coordinate should be entered per lines. An error message is
+shown if some lines could not be parsed - while the remaining lines are still shown on the map. The spacial reference
+system can be selected below, or be determined automatically from the range of the values entered.
+
 The geometry of the current input is shown in grey - updated on every keystroke. **Zoom to
 extent** moves the map onto it. The geometry can then be added to a "Entered Coordinates" layer using the **Add**
 button, where they are shown in blue. The colors can be configured (see below).
@@ -16,7 +20,7 @@ elements are not stored, so do not persist across reloades.
 
 ## Configuration
 
-Everything is configured through `Config`:
+No configuration is necessary. The reference systems available and colors can be configured as follows:
 
 ```json
 "dn_coordinate_input": {

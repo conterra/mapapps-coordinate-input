@@ -311,18 +311,23 @@ export default class CoordinateInputController {
      * Reads one coordinate per line, e.g. `7.0982, 50.7374`, text after the
      * coordinates is ignored.
      *
-     * Lines that do not hold two numbers are skipped rather than reported: the
-     * text is parsed on every keystroke, so an incomplete line is the normal
-     * case while typing, not an error.
+     * Lines that hold no coordinate are skipped rather than aborting the whole
+     * input, and counted so that the widget can point them out. Blank lines are
+     * not counted.
      */
     private parseCoordinates(text: string): Coordinate[] {
         const coordinates: Coordinate[] = [];
+        let skippedLineCount = 0;
         for (const line of text.split("\n")) {
             const coordinate = this.parseCoordinate(line);
             if (coordinate) {
                 coordinates.push(coordinate);
+            } else if (line.trim() !== "") {
+                skippedLineCount++;
             }
         }
+
+        this.coordinateInputModel!.skippedLineCount = skippedLineCount;
         return coordinates;
     }
 
@@ -349,9 +354,13 @@ export default class CoordinateInputController {
      */
     private resolveSpatialReference(referenceSystem: string, coordinates: Coordinate[],
         referenceSystems: ReferenceSystem[]): SpatialReference | undefined {
-        const id = referenceSystem === AUTO_REFERENCE_SYSTEM
-            ? this.detectReferenceSystem(coordinates, referenceSystems)
-            : referenceSystem;
+        let id: string | undefined;
+        if (referenceSystem === AUTO_REFERENCE_SYSTEM){
+            id = this.detectReferenceSystem(coordinates, referenceSystems);
+        } else {
+            this.coordinateInputModel!.unknownReferenceSystem = false;
+            id = referenceSystem;
+        }
 
         const wkid = Number(id);
         if (!id || !Number.isFinite(wkid)) {
@@ -373,10 +382,14 @@ export default class CoordinateInputController {
      * The heuristic can only separate reference systems by their value ranges,
      * so it cannot tell apart systems that share one - the two UTM zones look
      * the same to it, and the one listed first in the rules is picked.
+     *
+     * Errors are indicated to the model for an error message on the widget.
      */
     private detectReferenceSystem(coordinates: Coordinate[],
         referenceSystems: ReferenceSystem[]): string | undefined {
+        const model = this.coordinateInputModel!;
         if (coordinates.length === 0) {
+            model.unknownReferenceSystem = false;
             return undefined;
         }
 
@@ -384,6 +397,7 @@ export default class CoordinateInputController {
         const rule = DETECTION_RULES.find(({ id, x, y }) => configured.has(id)
             && coordinates.every(([cx, cy]) => cx >= x[0] && cx <= x[1] && cy >= y[0] && cy <= y[1]));
 
+        model.unknownReferenceSystem = !rule;
         return rule?.id;
     }
 
