@@ -68,6 +68,22 @@ export const CoordinateInputModel = declare({
     },
 
     /**
+     * Colour the geometry of the current input is drawn in, as a CSS colour,
+     * e.g. `"#5c5c5c"`, `"rgb(92, 92, 92)"` or `"dimgray"`. Configurable via
+     * app.json.
+     */
+    sketchColor: {
+        value: "#5c5c5c",
+        required: true as const
+    },
+
+    /** Colour the added geometries are drawn in, given like {@link sketchColor}. */
+    addedColor: {
+        value: "#005ce6",
+        required: true as const
+    },
+
+    /**
      * Whether the current input yields any geometry. Written by the controller.
      */
     hasGeometry: {

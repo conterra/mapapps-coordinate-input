@@ -14,6 +14,7 @@
 /// limitations under the License.
 ///
 
+import Color from "@arcgis/core/Color";
 import Graphic from "@arcgis/core/Graphic";
 import GraphicsLayer from "@arcgis/core/layers/GraphicsLayer";
 import Point from "@arcgis/core/geometry/Point";
@@ -45,34 +46,15 @@ const PERSISTENT_LAYER_ID = "dn_coordinate_input_geometries";
 
 const LOG = loggerForName("dn_coordinate_input/CoordinateInputController");
 
-/** A symbol for each mode's geometry, drawn in the given rgb colour. */
-function createSymbols(color: [number, number, number]): Record<CoordinateInputMode, any> {
-    return {
-        points: {
-            type: "simple-marker",
-            style: "circle",
-            size: 8,
-            color: [...color, 0.75],
-            outline: { color: [255, 255, 255], width: 1.25 }
-        },
-        line: {
-            type: "simple-line",
-            color: [...color, 0.9],
-            width: 2
-        },
-        polygon: {
-            type: "simple-fill",
-            color: [...color, 0.25],
-            outline: { color: [...color, 0.9], width: 2 }
-        }
-    };
-}
+/**
+ * Colours to fall back to if the configured ones cannot be read. They are the
+ * same values the model defaults to.
+ */
+const DEFAULT_SKETCH_COLOR = "#5c5c5c";
+const DEFAULT_ADDED_COLOR = "#005ce6";
 
-/** The geometry of the current input is drawn in gray, ... */
-const SKETCH_SYMBOLS = createSymbols([92, 92, 92]);
-
-/** ... and what has been added to the persistent layer in blue. */
-const PERSISTENT_SYMBOLS = createSymbols([0, 92, 230]);
+/** The symbols a layer is drawn with, one for each mode's geometry. */
+type ModeSymbols = Record<CoordinateInputMode, any>;
 
 /** Splits a line into its parts, accepting `7.1, 50.7` as well as `7.1 50.7`. */
 const SEPARATORS = /[\s,;]+/;
@@ -121,6 +103,15 @@ export default class CoordinateInputController {
     private sketchLayer: GraphicsLayer | undefined;
 
     /**
+     * Symbols of the two layers, built from the configured colours on
+     * activation. The colours are configuration, so they are read once instead
+     * of being watched.
+     */
+    private sketchSymbols!: ModeSymbols;
+
+    private addedSymbols!: ModeSymbols;
+
+    /**
      * Holds the geometries that have been added. Only "persistent" in contrast
      * to the sketch layer: nothing is stored, so it is gone on reload.
      */
@@ -128,6 +119,9 @@ export default class CoordinateInputController {
 
     activate(): void {
         const model = this.coordinateInputModel!;
+        this.sketchSymbols = this.createSymbols(this.readColor(model.sketchColor, DEFAULT_SKETCH_COLOR));
+        this.addedSymbols = this.createSymbols(this.readColor(model.addedColor, DEFAULT_ADDED_COLOR));
+
         this.observers.add(
             ...INPUT_PROPERTIES.map((property) => model.watch(property, () => this.onInputChanged())),
             // The tool's active state follows the widget's window, so this fires
@@ -182,7 +176,7 @@ export default class CoordinateInputController {
         // one layer at a time.
         this.sketchLayer!.graphics.removeAll();
         for (const graphic of sketched) {
-            graphic.symbol = PERSISTENT_SYMBOLS[model.mode];
+            graphic.symbol = this.addedSymbols[model.mode];
         }
         this.persistentLayer!.graphics.addMany(sketched);
         this.onAddedGeometriesChanged();
@@ -252,10 +246,10 @@ export default class CoordinateInputController {
         const model = this.coordinateInputModel!;
         const { coordinates, mode, referenceSystem, referenceSystems } = model;
 
-        const parsedCoordinates = parseCoordinates(coordinates);
-        const spatialReference = resolveSpatialReference(referenceSystem, parsedCoordinates, referenceSystems);
+        const parsedCoordinates = this.parseCoordinates(coordinates);
+        const spatialReference = this.resolveSpatialReference(referenceSystem, parsedCoordinates, referenceSystems);
         const graphics = spatialReference
-            ? createGraphics(mode, parsedCoordinates, spatialReference)
+            ? this.createGraphics(mode, parsedCoordinates, spatialReference)
             : [];
 
         const layer = this.sketchLayer!;
@@ -265,142 +259,196 @@ export default class CoordinateInputController {
         model.hasGeometry = graphics.length > 0;
     }
 
-}
-
-/**
- * Reads one coordinate per line, e.g. `7.0982, 50.7374`, text after the
- * coordinates is ignored.
- *
- * Lines that do not hold two numbers are skipped rather than reported: the text
- * is parsed on every keystroke, so an incomplete line is the normal case while
- * typing, not an error.
- */
-function parseCoordinates(text: string): Coordinate[] {
-    const coordinates: Coordinate[] = [];
-    for (const line of text.split("\n")) {
-        const coordinate = parseCoordinate(line);
-        if (coordinate) {
-            coordinates.push(coordinate);
+    /**
+     * Reads a configured colour, accepting everything CSS does: `"#5c5c5c"`,
+     * `"rgb(92, 92, 92)"` or a colour name.
+     *
+     * A value that cannot be read falls back to `fallbackColor` and is reported,
+     * because a typo in the configuration would otherwise leave the geometries
+     * drawn in whatever colour the fallback of the graphics layer happens to be.
+     */
+    private readColor(color: string, fallbackColor: string): Color {
+        const parsed = Color.fromString(color);
+        if (!parsed) {
+            LOG.warn("Cannot read the configured colour '{}', falling back to '{}'.", color, fallbackColor);
+            return new Color(fallbackColor);
         }
-    }
-    return coordinates;
-}
-
-function parseCoordinate(line: string): Coordinate | undefined {
-    const parts = line.split(SEPARATORS);
-    if (parts.length < 2 || parts[0] === "" || parts[1] === "") {
-        return undefined;
+        return parsed;
     }
 
-    const x = Number(parts[0]);
-    const y = Number(parts[1]);
-    if (!Number.isFinite(x) || !Number.isFinite(y)) {
-        return undefined;
+    /**
+     * A symbol for each mode's geometry, drawn in the given colour.
+     *
+     * The opacities belong to the symbols rather than to the colour: they keep a
+     * polygon's fill light enough to read the map through it, and its outline as
+     * present as a line. A configured colour is therefore taken by its rgb
+     * values only, and any alpha it carries is ignored.
+     */
+    private createSymbols(color: Color): ModeSymbols {
+        const { r, g, b } = color;
+        return {
+            points: {
+                type: "simple-marker",
+                style: "circle",
+                size: 8,
+                color: [r, g, b, 0.75],
+                outline: { color: [255, 255, 255], width: 1.25 }
+            },
+            line: {
+                type: "simple-line",
+                color: [r, g, b, 0.9],
+                width: 2
+            },
+            polygon: {
+                type: "simple-fill",
+                color: [r, g, b, 0.25],
+                outline: { color: [r, g, b, 0.9], width: 2 }
+            }
+        };
     }
 
-    return [x, y];
-}
-
-/**
- * Resolves the selected reference system into the spatial reference the entered
- * coordinates are read in, detecting it from their values if `auto` is selected.
- * Nothing is returned if no reference system could be settled on.
- */
-function resolveSpatialReference(referenceSystem: string, coordinates: Coordinate[],
-    referenceSystems: ReferenceSystem[]): SpatialReference | undefined {
-    const id = referenceSystem === AUTO_REFERENCE_SYSTEM
-        ? detectReferenceSystem(coordinates, referenceSystems)
-        : referenceSystem;
-
-    const wkid = Number(id);
-    if (!id || !Number.isFinite(wkid)) {
-        return undefined;
-    }
-
-    return new SpatialReference({ wkid });
-}
-
-/**
- * Guesses which of the configured reference systems the coordinates are given
- * in, for the `auto` entry of the selection.
- *
- * The rules are tried in order, and the first one wins whose reference system is
- * configured and whose ranges hold every single coordinate. Nothing is returned
- * if no rule fits, so unrecognized input draws nothing instead of drawing
- * somewhere far off.
- *
- * The heuristic can only separate reference systems by their value ranges, so it
- * cannot tell apart systems that share one - the two UTM zones look the same to
- * it, and the one listed first in the rules is picked.
- */
-function detectReferenceSystem(coordinates: Coordinate[], referenceSystems: ReferenceSystem[]): string | undefined {
-    if (coordinates.length === 0) {
-        return undefined;
-    }
-
-    const configured = new Set(referenceSystems.map(({ id }) => id));
-    const rule = DETECTION_RULES.find(({ id, x, y }) => configured.has(id)
-        && coordinates.every(([cx, cy]) => cx >= x[0] && cx <= x[1] && cy >= y[0] && cy <= y[1]));
-
-    return rule?.id;
-}
-
-/**
- * Builds the graphics for the selected mode. Nothing is returned as long as the
- * input does not hold enough coordinates for the geometry.
- */
-function createGraphics(mode: CoordinateInputMode, coordinates: Coordinate[],
-    spatialReference: SpatialReference): Graphic[] {
-    switch (mode) {
-        case "points":
-            return createPointGraphics(coordinates, spatialReference);
-        case "line":
-            return createLineGraphics(coordinates, spatialReference);
-        case "polygon":
-            return createPolygonGraphics(coordinates, spatialReference);
-    }
-}
-
-/** Turns each coordinate into a point graphic. */
-function createPointGraphics(coordinates: Coordinate[], spatialReference: SpatialReference): Graphic[] {
-    return coordinates.map(([x, y]) => new Graphic({
-        geometry: new Point({ x, y, spatialReference }),
-        symbol: SKETCH_SYMBOLS.points
-    }));
-}
-
-/** Connects the coordinates into a single line, which needs at least two of them. */
-function createLineGraphics(coordinates: Coordinate[], spatialReference: SpatialReference): Graphic[] {
-    if (coordinates.length < 2) {
-        return [];
-    }
-
-    const geometry = new Polyline({ paths: [coordinates], spatialReference });
-    return [new Graphic({ geometry, symbol: SKETCH_SYMBOLS.line })];
-}
-
-/** Spans a single ring over the coordinates, which needs at least three of them. */
-function createPolygonGraphics(coordinates: Coordinate[], spatialReference: SpatialReference): Graphic[] {
-    if (coordinates.length < 3) {
-        return [];
-    }
-
-    const ring = closeRing(coordinates);
-    const geometry = new Polygon({ rings: [ring], spatialReference });
-    // A counter-clockwise ring counts as a hole and would stay unfilled.
-    if (!geometry.isClockwise(ring)) {
-        geometry.rings = [[...ring].reverse()];
-    }
-
-    return [new Graphic({ geometry, symbol: SKETCH_SYMBOLS.polygon })];
-}
-
-/** Repeats the first coordinate at the end, as a polygon ring has to be closed. */
-function closeRing(coordinates: Coordinate[]): Coordinate[] {
-    const first = coordinates[0];
-    const last = coordinates[coordinates.length - 1];
-    if (first[0] === last[0] && first[1] === last[1]) {
+    /**
+     * Reads one coordinate per line, e.g. `7.0982, 50.7374`, text after the
+     * coordinates is ignored.
+     *
+     * Lines that do not hold two numbers are skipped rather than reported: the
+     * text is parsed on every keystroke, so an incomplete line is the normal
+     * case while typing, not an error.
+     */
+    private parseCoordinates(text: string): Coordinate[] {
+        const coordinates: Coordinate[] = [];
+        for (const line of text.split("\n")) {
+            const coordinate = this.parseCoordinate(line);
+            if (coordinate) {
+                coordinates.push(coordinate);
+            }
+        }
         return coordinates;
     }
-    return [...coordinates, first];
+
+    private parseCoordinate(line: string): Coordinate | undefined {
+        const parts = line.split(SEPARATORS);
+        if (parts.length < 2 || parts[0] === "" || parts[1] === "") {
+            return undefined;
+        }
+
+        const x = Number(parts[0]);
+        const y = Number(parts[1]);
+        if (!Number.isFinite(x) || !Number.isFinite(y)) {
+            return undefined;
+        }
+
+        return [x, y];
+    }
+
+    /**
+     * Resolves the selected reference system into the spatial reference the
+     * entered coordinates are read in, detecting it from their values if `auto`
+     * is selected. Nothing is returned if no reference system could be settled
+     * on.
+     */
+    private resolveSpatialReference(referenceSystem: string, coordinates: Coordinate[],
+        referenceSystems: ReferenceSystem[]): SpatialReference | undefined {
+        const id = referenceSystem === AUTO_REFERENCE_SYSTEM
+            ? this.detectReferenceSystem(coordinates, referenceSystems)
+            : referenceSystem;
+
+        const wkid = Number(id);
+        if (!id || !Number.isFinite(wkid)) {
+            return undefined;
+        }
+
+        return new SpatialReference({ wkid });
+    }
+
+    /**
+     * Guesses which of the configured reference systems the coordinates are
+     * given in, for the `auto` entry of the selection.
+     *
+     * The rules are tried in order, and the first one wins whose reference
+     * system is configured and whose ranges hold every single coordinate.
+     * Nothing is returned if no rule fits, so unrecognized input draws nothing
+     * instead of drawing somewhere far off.
+     *
+     * The heuristic can only separate reference systems by their value ranges,
+     * so it cannot tell apart systems that share one - the two UTM zones look
+     * the same to it, and the one listed first in the rules is picked.
+     */
+    private detectReferenceSystem(coordinates: Coordinate[],
+        referenceSystems: ReferenceSystem[]): string | undefined {
+        if (coordinates.length === 0) {
+            return undefined;
+        }
+
+        const configured = new Set(referenceSystems.map(({ id }) => id));
+        const rule = DETECTION_RULES.find(({ id, x, y }) => configured.has(id)
+            && coordinates.every(([cx, cy]) => cx >= x[0] && cx <= x[1] && cy >= y[0] && cy <= y[1]));
+
+        return rule?.id;
+    }
+
+    /**
+     * Builds the graphics for the selected mode. They are drawn as a sketch,
+     * because that is where they go: only {@link addGeometry} moves them over to
+     * the persistent layer, and re-symbolizes them on the way.
+     *
+     * Nothing is returned as long as the input does not hold enough coordinates
+     * for the geometry.
+     */
+    private createGraphics(mode: CoordinateInputMode, coordinates: Coordinate[],
+        spatialReference: SpatialReference): Graphic[] {
+        switch (mode) {
+            case "points":
+                return this.createPointGraphics(coordinates, spatialReference);
+            case "line":
+                return this.createLineGraphics(coordinates, spatialReference);
+            case "polygon":
+                return this.createPolygonGraphics(coordinates, spatialReference);
+        }
+    }
+
+    /** Turns each coordinate into a point graphic. */
+    private createPointGraphics(coordinates: Coordinate[], spatialReference: SpatialReference): Graphic[] {
+        return coordinates.map(([x, y]) => new Graphic({
+            geometry: new Point({ x, y, spatialReference }),
+            symbol: this.sketchSymbols.points
+        }));
+    }
+
+    /** Connects the coordinates into a single line, which needs at least two of them. */
+    private createLineGraphics(coordinates: Coordinate[], spatialReference: SpatialReference): Graphic[] {
+        if (coordinates.length < 2) {
+            return [];
+        }
+
+        const geometry = new Polyline({ paths: [coordinates], spatialReference });
+        return [new Graphic({ geometry, symbol: this.sketchSymbols.line })];
+    }
+
+    /** Spans a single ring over the coordinates, which needs at least three of them. */
+    private createPolygonGraphics(coordinates: Coordinate[], spatialReference: SpatialReference): Graphic[] {
+        if (coordinates.length < 3) {
+            return [];
+        }
+
+        const ring = this.closeRing(coordinates);
+        const geometry = new Polygon({ rings: [ring], spatialReference });
+        // A counter-clockwise ring counts as a hole and would stay unfilled.
+        if (!geometry.isClockwise(ring)) {
+            geometry.rings = [[...ring].reverse()];
+        }
+
+        return [new Graphic({ geometry, symbol: this.sketchSymbols.polygon })];
+    }
+
+    /** Repeats the first coordinate at the end, as a polygon ring has to be closed. */
+    private closeRing(coordinates: Coordinate[]): Coordinate[] {
+        const first = coordinates[0];
+        const last = coordinates[coordinates.length - 1];
+        if (first[0] === last[0] && first[1] === last[1]) {
+            return coordinates;
+        }
+        return [...coordinates, first];
+    }
+
 }
