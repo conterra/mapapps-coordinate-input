@@ -22,9 +22,25 @@ Everything is configured through `Config`:
 "dn_coordinate_input": {
     "Config": {
         "referenceSystems": [
-            { "id": "auto" },
-            { "id": "4326", "title": "WGS 84 (EPSG:4326)" },
-            { "id": "25832", "title": "ETRS89 / UTM zone 32N (EPSG:25832)" }
+            {
+                "id": "auto"
+            },
+            {
+                "id": "4326",
+                "title": "WGS 84 (EPSG:4326)"
+            },
+            {
+                "id": "3857",
+                "title": "WGS 84 / Pseudo-Mercator (EPSG:3857)"
+            },
+            {
+                "id": "25832",
+                "title": "ETRS89 / UTM zone 32N (EPSG:25832)"
+            },
+            {
+                "id": "25833",
+                "title": "ETRS89 / UTM zone 33N (EPSG:25833)"
+            }
         ],
         "sketchColor": "#5c5c5c",
         "addedColor": "#005ce6"
@@ -42,11 +58,9 @@ stays translated.
 #### Automatic detection
 
 The `auto` entry guesses the reference system from the value ranges of the entered coordinates. It only ever
-picks a system that is configured, and it recognizes `4326`, `25832`, `25833` and `3857`. Anything else has to
-be selected explicitly, as does a choice between systems that share a value range: the two UTM zones cannot be
-told apart from the numbers alone, and the one configured first wins. Coordinates that fit no known range are
-not drawn.
-
+picks a system that is configured (only `4326`, `25832`, `25833` and `3857` are supported for auto-selection).
+The two UTM zones (`25832` and `25833`) cannot be told apart from the numbers alone. If both are configured,
+zone 32N always wins over 33N. If the coordinates do not fit any known range, nothing is added.
 
 ### Symbol colours
 

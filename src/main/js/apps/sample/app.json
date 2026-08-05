@@ -488,6 +488,33 @@
                 ]
             }
         },
+        "dn_coordinate_input": {
+            "Config": {
+                "referenceSystems": [
+                    {
+                        "id": "auto"
+                    },
+                    {
+                        "id": "4326",
+                        "title": "WGS 84 (EPSG:4326)"
+                    },
+                    {
+                        "id": "3857",
+                        "title": "WGS 84 / Pseudo-Mercator (EPSG:3857)"
+                    },
+                    {
+                        "id": "25832",
+                        "title": "ETRS89 / UTM zone 32N (EPSG:25832)"
+                    },
+                    {
+                        "id": "25833",
+                        "title": "ETRS89 / UTM zone 33N (EPSG:25833)"
+                    }
+                ],
+                "sketchColor": "#5c5c5c",
+                "addedColor": "#005ce6"
+            }
+        },
         "dn_imprintprivacy": {
             "ToolHandler": {
                 "imprintUrls": [
