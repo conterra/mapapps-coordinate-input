@@ -33,6 +33,7 @@
             "templatelayout",
             "theme-autumn",
             "toc",
+            "toolrules",
             "toolset",
             "dn_imprintprivacy",
             "dn_coordinate_input",
@@ -486,6 +487,11 @@
                         ]
                     }
                 ]
+            }
+        },
+        "toolrules": {
+            "ToolActiveStateManager": {
+                "activateOnStartToolIds": ["coordinateInputToggleTool"]
             }
         },
         "dn_coordinate_input": {
