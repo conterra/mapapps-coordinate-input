@@ -17,7 +17,37 @@
 const i18n = {
     root: {
         bundleName: "Coordinate Input",
-        bundleDescription: "This bundle allows importing of lists of coordinates into a layer"
+        bundleDescription: "This bundle allows importing of lists of coordinates into a layer",
+        windowTitle: "Coordinate Input",
+        layerTitle: "Entered coordinates",
+        tool: {
+            title: "Coordinate Input",
+            tooltip: "Import coordinates"
+        },
+        ui: {
+            modes: {
+                points: "Points",
+                line: "Line",
+                polygon: "Polygon"
+            },
+            coordinates: {
+                label: "Coordinates",
+                placeholder: "One coordinate pair per line, e.g.\n7.0982, 50.7374\n7.1123, 50.7401"
+            },
+            referenceSystem: {
+                label: "Reference system",
+                auto: "Auto"
+            },
+            zoomToExtent: "Zoom to extent",
+            addGeometry: "Add",
+            addedGeometries: "Added geometries",
+            clearGeometries: "Clear",
+            messages: {
+                unknownReferenceSystem: "Reference system could not be determined.",
+                skippedLine: "1 line could not be read.",
+                skippedLines: "${count} lines could not be read."
+            }
+        }
     },
     de: true
 };

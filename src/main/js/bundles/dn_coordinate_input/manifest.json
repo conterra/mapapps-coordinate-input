@@ -6,6 +6,7 @@
     "productName": "devnet-mapapps-coordinate-input",
     "vendor": "con terra GmbH",
     "main": "",
+    "layer": "module",
     "keywords": [
         "sample"
     ],
@@ -13,9 +14,104 @@
         "bundle"
     ],
     "dependencies": {
-        "ct": "^4.16.0"
+        "@arcgis/core": "~4.33.14",
+        "ct": "^4.20.0",
+        "apprt-binding": "^4.20.0",
+        "apprt-core": "^4.20.0",
+        "apprt-vue": "^4.20.0",
+        "apprt-vuetify": "^4.20.0",
+        "map-widget": "^4.20.0"
     },
+    "cssThemesExtension": [
+        {
+            "name": "*",
+            "files": [
+                "css/styles.css"
+            ]
+        }
+    ],
+    "layout-widgets": [
+        {
+            "widgetRole": "coordinateInputWidget",
+            "window": {
+                "title": "${windowTitle}",
+                "dockTool": "coordinateInputToggleTool",
+                "minimizeOnClose": true,
+                "closable": true,
+                "marginBox": {
+                    "w": 393,
+                    "h": 420,
+                    "t": 125,
+                    "l": 20
+                }
+            }
+        }
+    ],
     "components": [
-
+        {
+            "name": "Config",
+            "provides": [
+                "dn_coordinate_input.CoordinateInputModel"
+            ],
+            "propertiesConstructor": true
+        },
+        {
+            "name": "CoordinateInputController",
+            "provides": [
+                "dn_coordinate_input.CoordinateInputController"
+            ],
+            "immediate": true,
+            "references": [
+                {
+                    "name": "coordinateInputModel",
+                    "providing": "dn_coordinate_input.CoordinateInputModel"
+                },
+                {
+                    "name": "mapWidgetModel",
+                    "providing": "map-widget.MapWidgetModel"
+                },
+                {
+                    "name": "coordinateInputTool",
+                    "providing": "ct.tools.Tool",
+                    "filter": "(id=coordinateInputToggleTool)"
+                }
+            ]
+        },
+        {
+            "name": "CoordinateInputWidgetFactory",
+            "provides": [
+                "dijit.Widget"
+            ],
+            "instanceFactory": true,
+            "properties": {
+                "widgetRole": "coordinateInputWidget"
+            },
+            "references": [
+                {
+                    "name": "coordinateInputModel",
+                    "providing": "dn_coordinate_input.CoordinateInputModel"
+                },
+                {
+                    "name": "coordinateInputController",
+                    "providing": "dn_coordinate_input.CoordinateInputController"
+                }
+            ]
+        },
+        {
+            "name": "CoordinateInputToggleTool",
+            "impl": "ct/tools/Tool",
+            "provides": [
+                "ct.tools.Tool"
+            ],
+            "propertiesConstructor": true,
+            "properties": {
+                "id": "coordinateInputToggleTool",
+                "title": "${tool.title}",
+                "tooltip": "${tool.tooltip}",
+                "iconClass": "icon-coordinate-finder",
+                "toolRole": "toolset",
+                "togglable": true
+            }
+        }
     ]
 }

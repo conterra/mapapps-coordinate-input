@@ -18,5 +18,35 @@ import { Messages } from "../bundle";
 
 export default {
     bundleName: "Hallo Welt",
-    bundleDescription: "Dieses Bundle erlaubt den Import einer Liste von Koordinaten in ein Layer."
+    bundleDescription: "Dieses Bundle erlaubt den Import einer Liste von Koordinaten in ein Layer.",
+    windowTitle: "Koordinateneingabe",
+    layerTitle: "Eingegebene Koordinaten",
+    tool: {
+        title: "Koordinateneingabe",
+        tooltip: "Koordinaten importieren"
+    },
+    ui: {
+        modes: {
+            points: "Punkte",
+            line: "Linie",
+            polygon: "Polygon"
+        },
+        coordinates: {
+            label: "Koordinaten",
+            placeholder: "Ein Koordinatenpaar pro Zeile, z. B.\n7.0982, 50.7374\n7.1123, 50.7401"
+        },
+        referenceSystem: {
+            label: "Referenzsystem",
+            auto: "Automatisch"
+        },
+        zoomToExtent: "Auf Ausdehnung zoomen",
+        addGeometry: "Hinzufügen",
+        addedGeometries: "Hinzugefügte Geometrien",
+        clearGeometries: "Leeren",
+        messages: {
+            unknownReferenceSystem: "Referenzsystem konnte nicht bestimmt werden.",
+            skippedLine: "1 Zeile konnte nicht gelesen werden.",
+            skippedLines: "${count} Zeilen konnten nicht gelesen werden."
+        }
+    }
 } satisfies Messages;

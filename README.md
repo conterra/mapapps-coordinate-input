@@ -1,5 +1,9 @@
 # mapapps-coordinate-input
 
+This bundle lets the user paste a list of coordinates, choose how they are interpreted (points, line, polygon) and pick the
+reference system they are given in.
+
+![Screenshot App](https://github.com/conterra/mapapps-coordinate-input/blob/main/screenshot.png)
 
 ## Software Requirements
 
